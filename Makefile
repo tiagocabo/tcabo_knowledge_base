@@ -1,0 +1,2 @@
+format:
+	uv run black .
