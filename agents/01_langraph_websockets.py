@@ -9,9 +9,10 @@ pip install langgraph langchain-openai langchain-core websockets pydantic python
 
 Set:
   export OPENAI_API_KEY="..."
+  export LLM_GATEWAY_URL="..."
 
 Run:
-  python hospital_ws_langgraph_pydantic.py
+  uv run hospital_ws_langgraph_pydantic.py
 """
 
 import asyncio
@@ -30,6 +31,7 @@ from langgraph.graph.message import add_messages
 
 load_dotenv()
 
+
 # ---------------------------
 # 1) Pydantic models (structured outputs)
 # ---------------------------
@@ -37,7 +39,9 @@ class TreatmentPlan(BaseModel):
     urgency: Literal["urgent", "regular"] = Field(
         description="Overall urgency classification."
     )
-    summary: str = Field(description="Short summary of situation and recommended next step.")
+    summary: str = Field(
+        description="Short summary of situation and recommended next step."
+    )
     likely_causes: list[str] = Field(
         default_factory=list,
         description="General possibilities (not a diagnosis).",
@@ -104,12 +108,15 @@ def doctor_system_prompt(doctor_type: Literal["urgent", "regular"]) -> str:
         "Return output that conforms to the provided schema.\n"
     )
     return base + (
-        "Role: Emergency/urgent care clinician.\n" if doctor_type == "urgent"
+        "Role: Emergency/urgent care clinician.\n"
+        if doctor_type == "urgent"
         else "Role: Primary care clinician.\n"
     )
 
 
-def doctor_user_prompt(issue: str, default_urgency: Literal["urgent", "regular"]) -> str:
+def doctor_user_prompt(
+    issue: str, default_urgency: Literal["urgent", "regular"]
+) -> str:
     return (
         f"Patient issue: {issue}\n\n"
         "Create a treatment-oriented plan.\n"
@@ -120,7 +127,9 @@ def doctor_user_prompt(issue: str, default_urgency: Literal["urgent", "regular"]
     )
 
 
-async def doctor_agent_ws_server(host: str, port: int, doctor_type: Literal["urgent", "regular"]) -> None:
+async def doctor_agent_ws_server(
+    host: str, port: int, doctor_type: Literal["urgent", "regular"]
+) -> None:
     """
     WS request:  {"issue": "..."}
     WS response: {"doctor_type": "...", "plan": <TreatmentPlan dict>}
@@ -157,7 +166,11 @@ async def doctor_agent_ws_server(host: str, port: int, doctor_type: Literal["urg
                     otc_options=[],
                     what_to_avoid=[],
                     red_flags=["Worsening symptoms", "Trouble breathing", "Fainting"],
-                    what_to_tell_clinician=["Main symptoms", "When it started", "Any medical history/meds/allergies"],
+                    what_to_tell_clinician=[
+                        "Main symptoms",
+                        "When it started",
+                        "Any medical history/meds/allergies",
+                    ],
                     disclaimer="General information only; not a diagnosis or medical advice.",
                 )
 
@@ -186,7 +199,9 @@ ORCH_TRIAGE = ORCH_BASE.with_structured_output(SeverityResult)
 
 
 async def classify_severity(state: HospitalState) -> HospitalState:
-    issue = next((m.content for m in state["messages"] if isinstance(m, HumanMessage)), "")
+    issue = next(
+        (m.content for m in state["messages"] if isinstance(m, HumanMessage)), ""
+    )
 
     messages = [
         {
@@ -203,7 +218,10 @@ async def classify_severity(state: HospitalState) -> HospitalState:
     ]
 
     result: SeverityResult = await ORCH_TRIAGE.ainvoke(messages)
-    return {"severity": result.severity, "messages": [AIMessage(content=f"Triage severity = {result.severity}")]}  # log
+    return {
+        "severity": result.severity,
+        "messages": [AIMessage(content=f"Triage severity = {result.severity}")],
+    }  # log
 
 
 def route(state: HospitalState) -> Literal["call_urgent", "call_regular"]:
@@ -226,7 +244,11 @@ async def call_agent_over_ws(ws_url: str, issue: str) -> TreatmentPlan:
             summary="Unable to validate the returned plan. Please seek professional medical evaluation.",
             home_care=["Seek professional evaluation."],
             red_flags=["Worsening symptoms", "Trouble breathing", "Fainting"],
-            what_to_tell_clinician=["Main symptoms", "When it started", "Medical history/meds/allergies"],
+            what_to_tell_clinician=[
+                "Main symptoms",
+                "When it started",
+                "Medical history/meds/allergies",
+            ],
             disclaimer=f"General information only; not a diagnosis or medical advice. (validation error: {e})",
         )
 
@@ -234,19 +256,29 @@ async def call_agent_over_ws(ws_url: str, issue: str) -> TreatmentPlan:
 async def urgency_doctor_node(state: HospitalState) -> HospitalState:
     issue = next(m.content for m in state["messages"] if isinstance(m, HumanMessage))
     plan = await call_agent_over_ws("ws://127.0.0.1:8765", issue)
-    return {"plan": plan, "messages": [AIMessage(content="Urgency doctor plan received.")]}  # metadata
+    return {
+        "plan": plan,
+        "messages": [AIMessage(content="Urgency doctor plan received.")],
+    }  # metadata
 
 
 async def regular_doctor_node(state: HospitalState) -> HospitalState:
     issue = next(m.content for m in state["messages"] if isinstance(m, HumanMessage))
     plan = await call_agent_over_ws("ws://127.0.0.1:8766", issue)
-    return {"plan": plan, "messages": [AIMessage(content="Regular doctor plan received.")]}  # metadata
+    return {
+        "plan": plan,
+        "messages": [AIMessage(content="Regular doctor plan received.")],
+    }  # metadata
 
 
 async def finalize(state: HospitalState) -> HospitalState:
     plan = state.get("plan")
     if not plan:
-        return {"messages": [AIMessage(content="No plan generated. Please seek professional help.")]}
+        return {
+            "messages": [
+                AIMessage(content="No plan generated. Please seek professional help.")
+            ]
+        }
 
     lines: list[str] = []
     lines.append(f"**Urgency:** {plan.urgency}")
@@ -319,17 +351,22 @@ async def main():
 
     # 2. Write the binary data to a file
     with open("graph_output.png", "wb") as f:
-        f.write(image_data)    
-
+        f.write(image_data)
 
     print("\nDescribe your symptoms:")
     user_issue = await asyncio.to_thread(input, "> ")
 
     if not user_issue.strip():
-        user_issue = "I have severe chest pain radiating to my left arm and I feel dizzy."
+        user_issue = (
+            "I have severe chest pain radiating to my left arm and I feel dizzy."
+        )
         print(f"No input provided. Using default: {user_issue}")
 
-    inputs: HospitalState = {"messages": [HumanMessage(content=user_issue)], "severity": None, "plan": None}
+    inputs: HospitalState = {
+        "messages": [HumanMessage(content=user_issue)],
+        "severity": None,
+        "plan": None,
+    }
     result = await graph.ainvoke(inputs)
 
     print("\n=== FINAL RESPONSE ===\n")
