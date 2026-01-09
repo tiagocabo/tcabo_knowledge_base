@@ -6,7 +6,7 @@ services:
     environment:
       - DOCTOR_TYPE=urgent
     ports:
-      - "8765:8000"
+      - "8765:8001"
 
   doctor-regular:
     build: 
@@ -15,15 +15,15 @@ services:
     environment:
       - DOCTOR_TYPE=regular
     ports:
-      - "8766:8000"
+      - "8766:8001"
 
   orchestrator:
     build: 
       context: ./orchestrator_service
     env_file: .env
     environment:
-      - URGENT_DOCTOR_WS_URL=ws://doctor-urgent:8000/ws
-      - REGULAR_DOCTOR_WS_URL=ws://doctor-regular:8000/ws
+      - URGENT_DOCTOR_WS_URL=ws://doctor-urgent:8001/ws
+      - REGULAR_DOCTOR_WS_URL=ws://doctor-regular:8001/ws
     ports:
       - "8000:8000"
     depends_on:

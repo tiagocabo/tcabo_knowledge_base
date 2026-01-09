@@ -11,8 +11,8 @@ from langgraph.graph import END, START, StateGraph
 from models import HospitalState, SeverityResult, TreatmentPlan
 from pydantic import ValidationError
 
-URGENT_DOCTOR_WS_URL = os.environ.get("URGENT_DOCTOR_WS_URL", "ws://doctor-urgent:8000/ws")
-REGULAR_DOCTOR_WS_URL = os.environ.get("REGULAR_DOCTOR_WS_URL", "ws://doctor-regular:8000/ws")
+URGENT_DOCTOR_WS_URL = os.environ.get("URGENT_DOCTOR_WS_URL", "ws://doctor-urgent:8001/ws")
+REGULAR_DOCTOR_WS_URL = os.environ.get("REGULAR_DOCTOR_WS_URL", "ws://doctor-regular:8001/ws")
 
 ORCH_BASE = ChatOpenAI(
     model="gpt-4o-mini",

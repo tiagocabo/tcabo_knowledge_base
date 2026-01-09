@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from langchain_core.messages import HumanMessage
 from graph import build_graph
 from models import HospitalState
-import uvicorn
 
 app = FastAPI()
 
