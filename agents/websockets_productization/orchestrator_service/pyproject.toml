@@ -1,0 +1,14 @@
+[project]
+name = "orchestrator-service"
+version = "0.1.0"
+description = "Orchestrator Service for WS agent"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "langgraph",
+    "langchain-openai",
+    "websockets",
+    "pydantic",
+    "python-dotenv",
+]
