@@ -145,6 +145,8 @@ async def doctor_agent_ws_server(
     async def handler(ws):
         async for raw in ws:
             req = json.loads(raw)
+            print(f"-> [{doctor_type} doctor] Patient data received. Analyzing...")
+            await asyncio.sleep(3)
             issue = req.get("issue", "")
 
             messages = [
@@ -199,6 +201,8 @@ ORCH_TRIAGE = ORCH_BASE.with_structured_output(SeverityResult)
 
 
 async def classify_severity(state: HospitalState) -> HospitalState:
+    print("-> Triage Nurse: Reviewing patient symptoms...")
+    await asyncio.sleep(2)
     issue = next(
         (m.content for m in state["messages"] if isinstance(m, HumanMessage)), ""
     )
