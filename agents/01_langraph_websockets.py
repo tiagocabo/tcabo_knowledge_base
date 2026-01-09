@@ -350,7 +350,7 @@ async def main():
     image_data = graph.get_graph().draw_mermaid_png()
 
     # 2. Write the binary data to a file
-    with open("graph_output.png", "wb") as f:
+    with open("agents/graph_output.png", "wb") as f:
         f.write(image_data)
 
     print("\nDescribe your symptoms:")
