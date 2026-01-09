@@ -1,0 +1,12 @@
+[project]
+name = "doctor-service"
+version = "0.1.0"
+description = "Doctor Service for WS agent"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "langchain-openai",
+    "pydantic",
+    "python-dotenv",
+]
